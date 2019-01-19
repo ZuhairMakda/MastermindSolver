@@ -1,0 +1,42 @@
+from xmlrpc.server import SimpleXMLRPCServer
+from random import choice
+
+Colors = ['red', 'green', 'blue', 'yellow', 'purple', 'white']
+
+class Codemaker:
+    def __init__(self):
+        self.secret, self.attempts, self.score = {}, {}, {}
+    def newGame(self, username):
+        if type(username) != str or len(username) > 30: return "invalid username"
+        if username in self.secret: return "user has game in progress"
+        self.attempts[username] = 0 
+        self.secret[username] = [choice(Colors) for _ in range(4)]
+    def guessCode(self, username, guess):
+        if username not in self.secret: return "user has no game"
+        if type(guess) != list or len(guess) != 4 or not (set(guess) <= set(Colors)):
+            return "invalid guess"
+        black = sum(s == g for s, g in zip(self.secret[username], guess))
+        white = sum(min(guess.count(c), self.secret[username].count(c)) for c in Colors) - black
+        self.attempts[username] += 1
+        if black == 4:
+            if username not in self.score: self.score[username] = [self.attempts[username]]
+            else: self.score[username] = ([self.attempts[username]] + self.score[username])[:24]
+            del self.secret[username]; return "win"
+        if self.attempts[username] == 12:
+            if username not in self.score: self.score[username] = [99]
+            else: self.score[username] = ([99] + self.score[username])[:24]
+            del self.secret[username]; return "lose"
+        return (black, white)
+    def userScore(self, username):
+        if username not in self.score: return "user has no score"
+        score = self.score[username]
+        return sum(score) / len(score), score
+    def topScores(self):
+        tops = list(self.score.keys())
+        tops.sort(key = lambda u: sum(self.score[u]) / len(self.score[u]))
+        return [(u, sum(self.score[u]) / len(self.score[u])) for u in tops[:30]]
+
+#server = SimpleXMLRPCServer(("localhost", 8000), allow_none=True)
+server = SimpleXMLRPCServer(("jhub3.cas.mcmaster.ca", 8049), allow_none=True)
+server.register_instance(Codemaker())
+server.serve_forever()

@@ -1,0 +1,11 @@
+import xmlrpc.client
+
+def testCodebreaker(username):
+    
+    #server = xmlrpc.client.ServerProxy("http://localhost:8000")
+    server = xmlrpc.client.ServerProxy("http://jhub3.cas.mcmaster.ca:8049")
+    
+    #for i in range(24):
+        #print(i)
+    score = codebreaker(server, username)
+    print(score)
